@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    ports: ["8000:8000"]
+    env_file: .env
+    depends_on: [postgres, qdrant]
+    volumes: ["./backend:/app"]
+
+  frontend:
+    build: ./frontend
+    ports: ["3000:3000"]
+    env_file: .env
+    depends_on: [backend]
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: copilot
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: bi_copilot
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+
+  qdrant:
+    image: qdrant/qdrant:v1.9.1
+    ports: ["6333:6333"]
+    volumes: [qdrant_data:/qdrant/storage]
+
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    ports: ["9090:9090"]
+    volumes: ["./infra/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml"]
+
+  grafana:
+    image: grafana/grafana:10.4.0
+    ports: ["3001:3000"]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+
+volumes:
+  pgdata:
+  qdrant_data:
